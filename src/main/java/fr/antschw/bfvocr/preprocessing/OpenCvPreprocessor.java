@@ -1,5 +1,6 @@
 package fr.antschw.bfvocr.preprocessing;
 
+import fr.antschw.bfvocr.util.TempDirectoryHandler;
 import org.bytedeco.opencv.global.opencv_core;
 import org.bytedeco.opencv.global.opencv_imgcodecs;
 import org.bytedeco.opencv.global.opencv_imgproc;
@@ -267,7 +268,8 @@ public class OpenCvPreprocessor implements ImagePreprocessor {
             baseName = baseName.substring(0, baseName.lastIndexOf('.'));
         }
 
-        return Files.createTempFile(
+        // Use TempDirectoryHandler to create the temp file in the app's temp directory
+        return TempDirectoryHandler.createTempFile(
                 baseName + "-" + UUID.randomUUID().toString().substring(0, 8),
                 PROCESSED_IMAGE_EXTENSION
         );

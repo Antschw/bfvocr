@@ -2,6 +2,7 @@ package fr.antschw.bfvocr.ocr;
 
 import fr.antschw.bfvocr.config.OcrConfig;
 import fr.antschw.bfvocr.preprocessing.ImagePreprocessor;
+import fr.antschw.bfvocr.util.TempDirectoryHandler;
 
 import com.google.inject.Inject;
 import net.sourceforge.tess4j.ITesseract;
@@ -17,9 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -62,7 +61,6 @@ public class Tess4JOcrService implements OcrService {
         this.tessdataProvider = Objects.requireNonNull(tessdataProvider, "Tessdata provider cannot be null");
         this.tesseract = new Tesseract();
         setupTesseract();
-        registerCleanupHook();
     }
 
     /**
@@ -78,7 +76,7 @@ public class Tess4JOcrService implements OcrService {
         if (imagePath == null) {
             throw new IllegalArgumentException("Image path cannot be null");
         }
-        if (!Files.exists(imagePath)) {
+        if (!java.nio.file.Files.exists(imagePath)) {
             throw new IllegalArgumentException("Image file does not exist: " + imagePath);
         }
 
@@ -161,8 +159,8 @@ public class Tess4JOcrService implements OcrService {
      */
     protected void setupTesseract() {
         try {
-            // Create a temporary directory for OCR data
-            Path tempDir = Files.createTempDirectory(OCR_TEMP_DIR_PREFIX);
+            // Create a temporary directory for OCR data in the app temp directory
+            Path tempDir = TempDirectoryHandler.createTempDirectory(OCR_TEMP_DIR_PREFIX);
             tempDirRef.set(tempDir);
 
             // Create tessdata subdirectory
@@ -213,58 +211,24 @@ public class Tess4JOcrService implements OcrService {
     }
 
     /**
-     * Registers a shutdown hook to clean up temporary files when the JVM exits.
+     * Returns the current temporary directory path used by this service.
+     *
+     * @return the path to the temporary directory, or null if not initialized or already closed
      */
-    private void registerCleanupHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            Path tempDir = tempDirRef.get();
-            if (tempDir != null) {
-                cleanupDirectory(tempDir);
-            }
-        }));
+    protected Path getTempDir() {
+        return tempDirRef.get();
     }
 
     /**
-     * Closes resources and cleans up temporary files when the service is no longer needed.
-     * This method is not required but can be used for explicit cleanup.
+     * Closes resources when the service is no longer needed.
+     * Instead of manually cleaning up temp files, this now relies on
+     * the centralized TempDirectoryHandler.
      */
     public void close() {
-        Path tempDir = tempDirRef.getAndSet(null);
-        if (tempDir != null) {
-            cleanupDirectory(tempDir);
-        }
-    }
+        // Reset reference to temp directory
+        tempDirRef.set(null);
 
-    /**
-     * Utility method to clean up a directory and all its contents.
-     *
-     * @param directory the directory to clean up
-     */
-    private void cleanupDirectory(Path directory) {
-        if (directory == null || !Files.exists(directory)) {
-            return;
-        }
-
-        try (var pathStream = Files.walk(directory)) {
-            boolean allDeleted = pathStream.sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .map(file -> {
-                        boolean deleted = file.delete();
-                        if (!deleted) {
-                            LOGGER.warn("Failed to delete file: {}", file.getAbsolutePath());
-                        }
-                        return deleted;
-                    })
-                    .reduce(Boolean::logicalAnd)
-                    .orElse(true);
-
-            if (allDeleted) {
-                LOGGER.debug("Directory and all contents removed: {}", directory);
-            } else {
-                LOGGER.warn("Directory partially removed: {}", directory);
-            }
-        } catch (IOException e) {
-            LOGGER.warn("Failed to clean up directory: {}", directory, e);
-        }
+        // Temp files are managed by TempDirectoryHandler and will be cleaned up
+        // when the application shuts down or when explicitly calling TempDirectoryHandler.cleanup()
     }
 }

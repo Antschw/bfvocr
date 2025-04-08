@@ -3,6 +3,10 @@ package fr.antschw.bfvocr.impl;
 import fr.antschw.bfvocr.exceptions.BFVOcrException;
 import fr.antschw.bfvocr.ocr.TessdataProvider;
 import fr.antschw.bfvocr.preprocessing.ImagePreprocessor;
+import fr.antschw.bfvocr.util.TempDirectoryHandler;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -43,18 +47,33 @@ class DefaultBFVOcrServiceTest {
     @TempDir
     Path tempDir;
 
+    private Path testImagePath;
+
+    @BeforeEach
+    void setUp() throws IOException {
+        testImagePath = Files.createFile(tempDir.resolve("test.png"));
+    }
+
+    @AfterEach
+    void tearDown() {
+    }
+
+    @AfterAll
+    static void cleanupAll() {
+        TempDirectoryHandler.cleanup();
+    }
+
     /**
      * Tests for extractServerNumber(Path)
      */
     @Test
-    void extractServerNumber_Path_ShouldExtractNumber() throws IOException {
+    void extractServerNumber_Path_ShouldExtractNumber() {
         // Arrange
-        Path validImagePath = Files.createFile(tempDir.resolve("test.png"));
         try (DefaultBFVOcrService service = spy(createNoOpService())) {
             doReturn("12345").when(service).extractServerNumber(any(Path.class));
 
             // Act
-            String result = service.extractServerNumber(validImagePath);
+            String result = service.extractServerNumber(testImagePath);
 
             // Assert
             assertEquals("12345", result);
@@ -111,14 +130,13 @@ class DefaultBFVOcrServiceTest {
      * Tests for tryExtractServerNumber(Path)
      */
     @Test
-    void tryExtractServerNumber_Path_ShouldReturnOptionalWhenSuccess() throws IOException {
+    void tryExtractServerNumber_Path_ShouldReturnOptionalWhenSuccess() {
         // Arrange
-        Path validImagePath = Files.createFile(tempDir.resolve("test.png"));
         try (DefaultBFVOcrService service = spy(createNoOpService())) {
             doReturn("12345").when(service).extractServerNumber(any(Path.class));
 
             // Act
-            Optional<String> result = service.tryExtractServerNumber(validImagePath);
+            Optional<String> result = service.tryExtractServerNumber(testImagePath);
 
             // Assert
             assertTrue(result.isPresent());
@@ -152,14 +170,13 @@ class DefaultBFVOcrServiceTest {
     }
 
     @Test
-    void tryExtractServerNumber_Path_ShouldReturnEmptyWhenExceptionIsThrown() throws IOException {
+    void tryExtractServerNumber_Path_ShouldReturnEmptyWhenExceptionIsThrown() {
         // Arrange
-        Path validImagePath = Files.createFile(tempDir.resolve("test.png"));
         try (DefaultBFVOcrService service = spy(createNoOpService())) {
             doThrow(new RuntimeException("Test exception")).when(service).extractServerNumber(any(Path.class));
 
             // Act
-            Optional<String> result = service.tryExtractServerNumber(validImagePath);
+            Optional<String> result = service.tryExtractServerNumber(testImagePath);
 
             // Assert
             assertTrue(result.isEmpty());

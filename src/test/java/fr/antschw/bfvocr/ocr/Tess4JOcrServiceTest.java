@@ -4,10 +4,11 @@ import fr.antschw.bfvocr.config.OcrConfig;
 import fr.antschw.bfvocr.config.OcrConfigLoader;
 import fr.antschw.bfvocr.preprocessing.ImagePreprocessor;
 import fr.antschw.bfvocr.preprocessing.OpenCvPreprocessor;
+import fr.antschw.bfvocr.util.TempDirectoryHandler;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
@@ -25,7 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,9 +44,6 @@ class Tess4JOcrServiceTest {
     private TessdataProvider tessdataProvider;
     private Tess4JOcrService serviceToCleanup;
 
-    @TempDir
-    Path tempDir; // JUnit will create and clean up this temporary directory
-
     @BeforeEach
     void init() {
         config = OcrConfigLoader.load();
@@ -58,7 +55,14 @@ class Tess4JOcrServiceTest {
     void cleanup() {
         if (serviceToCleanup != null) {
             serviceToCleanup.close();
+            serviceToCleanup = null;
         }
+    }
+
+    @AfterAll
+    static void cleanupAll() {
+        // Ensure all temporary files created by TempDirectoryHandler are cleaned up
+        TempDirectoryHandler.cleanup();
     }
 
     private OcrService createService(ImagePreprocessor preprocessor) {
@@ -130,7 +134,7 @@ class Tess4JOcrServiceTest {
 
         try {
             String result = service.extractServerNumber(imagePath);
-            LOGGER.info("Successfully extracted server number '{}' from '{}' (expected: {})",
+            LOGGER.info("Successfully extracted server number '{}' from screenshot '{}' (expected: {})",
                     result, fileName, expectedNumber);
 
             assertEquals(expectedNumber, result,
@@ -160,8 +164,11 @@ class Tess4JOcrServiceTest {
 
         try {
             String result = service.extractServerNumber(image);
-            LOGGER.info("Successfully extracted server number '{}' from '{}' (expected: {})",
-                    result, fileName, expectedNumber);
+            LOGGER.info("Successfully extracted server number '{}' from buffered image '{}' (expected: {})",
+                    result,
+                    fileName,
+                    expectedNumber
+            );
 
             assertEquals(expectedNumber, result,
                     "Extracted server number should match the number in the filename");
@@ -190,31 +197,30 @@ class Tess4JOcrServiceTest {
     }
 
     @Test
-    void shouldWrapTesseractExceptionForPath() {
-        try {
-            Path tempFile = Files.createTempFile("test-", ".png");
-            Files.writeString(tempFile, "Not a valid image");
+    void shouldWrapTesseractExceptionForPath() throws IOException {
+        Path tempFile = TempDirectoryHandler.createTempFile("test-", ".png");
+        Files.writeString(tempFile, "Not a valid image");
 
-            ImagePreprocessor preprocessor = mock(ImagePreprocessor.class);
-            doReturn(tempFile.toFile()).when(preprocessor).preprocess(any(Path.class));
+        ImagePreprocessor preprocessor = mock(ImagePreprocessor.class);
+        doReturn(tempFile.toFile()).when(preprocessor).preprocess(any(Path.class));
 
-            OcrService service = createService(preprocessor);
+        OcrService service = createService(preprocessor);
 
-            RuntimeException ex = assertThrows(RuntimeException.class,
-                    () -> service.extractServerNumber(Path.of("dummy.png")));
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> service.extractServerNumber(Path.of("dummy.png")));
 
-            assertNotNull(ex.getMessage(), "Exception message should not be null");
-
-            Files.deleteIfExists(tempFile);
-        } catch (IOException e) {
-            fail("Test setup failed: " + e.getMessage());
-        }
+        assertNotNull(ex.getMessage(), "Exception message should not be null");
     }
 
     @Test
-    void shouldWrapTesseractExceptionForBufferedImage() {
+    void shouldWrapTesseractExceptionForBufferedImage() throws IOException {
+        Path nonexistentFilePath = TempDirectoryHandler.createTempFile("nonexistent-", ".png");
+        Files.deleteIfExists(nonexistentFilePath);
+
+        File nonexistentFile = nonexistentFilePath.toFile();
+
         ImagePreprocessor dummy = mock(ImagePreprocessor.class);
-        doReturn(new File("nonexistent.png")).when(dummy).preprocess(any(BufferedImage.class));
+        doReturn(nonexistentFile).when(dummy).preprocess(any(BufferedImage.class));
 
         OcrService service = createService(dummy);
         BufferedImage image = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
@@ -264,27 +270,27 @@ class Tess4JOcrServiceTest {
     }
 
     @Test
-    void shouldCleanupResourcesWhenClosed() throws NoSuchFieldException, IllegalAccessException {
+    void shouldCleanupResourcesWhenClosed() throws NoSuchFieldException {
         // Create service instance
         Tess4JOcrService service = new Tess4JOcrService(new OpenCvPreprocessor(), config, tessdataProvider);
 
         // Access private tempDirRef field using reflection
         Field tempDirRefField = Tess4JOcrService.class.getDeclaredField("tempDirRef");
         tempDirRefField.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        AtomicReference<Path> tempDirRef = (AtomicReference<Path>) tempDirRefField.get(service);
 
         // Save temporary directory path
-        Path tempDir = tempDirRef.get();
+        Path tempDir = service.getTempDir();
         assertNotNull(tempDir, "Temporary directory should not be null");
         assertTrue(Files.exists(tempDir), "Temporary directory should exist");
 
         // Call close method
         service.close();
 
-        // Verify that directory was deleted and reference cleared
-        assertFalse(Files.exists(tempDir), "Temporary directory should be deleted after close()");
-        assertNull(tempDirRef.get(), "Directory reference should be null after close()");
+        assertNull(service.getTempDir(), "Directory reference should be null after close()");
+
+        TempDirectoryHandler.cleanup();
+
+        assertFalse(Files.exists(tempDir), "Temporary directory should be deleted after cleanup");
     }
 
     @Test

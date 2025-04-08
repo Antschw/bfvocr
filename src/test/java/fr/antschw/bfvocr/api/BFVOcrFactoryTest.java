@@ -1,10 +1,12 @@
 package fr.antschw.bfvocr.api;
 
 import fr.antschw.bfvocr.guice.OcrModule;
+import fr.antschw.bfvocr.util.TempDirectoryHandler;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.bytedeco.javacpp.Loader;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +45,11 @@ class BFVOcrFactoryTest {
     public void setUp() throws Exception {
         lenient().when(mockInjector.getInstance(BFVOcrService.class)).thenReturn(mockService);
         resetFactoryStatics();
+    }
+
+    @AfterAll
+    static void cleanupAll() {
+        TempDirectoryHandler.cleanup();
     }
 
     protected void resetFactoryStatics() throws Exception {
@@ -98,7 +105,8 @@ class BFVOcrFactoryTest {
             mockedFactory.when(() -> BFVOcrFactory.extractServerNumber(any(Path.class))).thenCallRealMethod();
             lenient().when(mockService.extractServerNumber(any(Path.class))).thenReturn("12345");
 
-            String result = BFVOcrFactory.extractServerNumber(Path.of("test.png"));
+            Path testPath = Path.of("test.png");
+            String result = BFVOcrFactory.extractServerNumber(testPath);
 
             assertEquals("12345", result);
             verify(mockService).extractServerNumber(any(Path.class));

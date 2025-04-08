@@ -51,6 +51,8 @@ fr.antschw.bfvocr
 ├── preprocessing              # Image preprocessor interfaces and impl
 │   ├── ImagePreprocessor.java
 │   └── OpenCvPreprocessor.java
+├── util                       # Utility class for cleaning temporary files 
+│   └── OpenCvPreprocessor.java
 └── App.java                   # CLI test runner for screenshots or files
 ```
 

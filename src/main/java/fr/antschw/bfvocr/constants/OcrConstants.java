@@ -60,7 +60,7 @@ public final class OcrConstants {
     /**
      * Maximum number of numeric sequences in valid BFV screenshot OCR result
      */
-    public static final int MAX_NUMERIC_SEQUENCES = 20;
+    public static final int MAX_NUMERIC_SEQUENCES = 40;
 
     /**
      * Maximum length of OCR text for a valid BFV server screen

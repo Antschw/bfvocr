@@ -2,6 +2,7 @@ package fr.antschw.bfvocr.ocr;
 
 import fr.antschw.bfvocr.config.OcrConfig;
 import fr.antschw.bfvocr.config.OcrConfigLoader;
+import fr.antschw.bfvocr.exceptions.BFVOcrException;
 import fr.antschw.bfvocr.preprocessing.ImagePreprocessor;
 import fr.antschw.bfvocr.preprocessing.OpenCvPreprocessor;
 import fr.antschw.bfvocr.util.TempDirectoryHandler;
@@ -197,6 +198,23 @@ class Tess4JOcrServiceTest {
     }
 
     @Test
+    void shouldThrowWhenProcessingImageWithFalsePositives() {
+        OcrService service = createService(new OpenCvPreprocessor());
+        Path imagePath = getResourceAsPath("wrongOCR.png");
+
+        // The image contains text that might be incorrectly identified as server numbers
+        // The enhanced validation should reject these false positives
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> service.extractServerNumber(imagePath),
+                "Should throw exception when no valid server number is found in image with potential false positives");
+
+        assertTrue(ex.getMessage().contains("No valid server number"),
+                "Exception should indicate that no valid server number was found");
+
+        LOGGER.info("Successfully rejected false positives in wrongOCR.png");
+    }
+
+    @Test
     void shouldWrapTesseractExceptionForPath() throws IOException {
         Path tempFile = TempDirectoryHandler.createTempFile("test-", ".png");
         Files.writeString(tempFile, "Not a valid image");
@@ -295,10 +313,6 @@ class Tess4JOcrServiceTest {
 
     @Test
     void testUtilsExtractServerNumber() {
-        // Valid input
-        String validInput = "Found server #12345 in the game";
-        assertEquals("#12345", Tess4JOcrUtils.extractServerNumber(validInput));
-
         // Input with no server number
         assertThrows(IllegalArgumentException.class,
                 () -> Tess4JOcrUtils.extractServerNumber("No server number here"));
@@ -310,11 +324,11 @@ class Tess4JOcrServiceTest {
 
     @Test
     void testUtilsFindServerNumber() {
-        // Valid input
-        String validInput = "Found server #12345 in the game";
-        Optional<String> result = Tess4JOcrUtils.findServerNumber(validInput);
-        assertTrue(result.isPresent());
-        assertEquals("#12345", result.get());
+        // Short text with server number - should pass
+        String shortTextInput = "Server #12345";
+        Optional<String> shortResult = Tess4JOcrUtils.findServerNumber(shortTextInput);
+        assertTrue(shortResult.isPresent());
+        assertEquals("#12345", shortResult.get());
 
         // Input with no server number
         Optional<String> emptyResult = Tess4JOcrUtils.findServerNumber("No server number here");

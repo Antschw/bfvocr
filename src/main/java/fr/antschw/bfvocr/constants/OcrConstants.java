@@ -38,18 +38,34 @@ public final class OcrConstants {
     public static final String OCR_TEMP_DIR_PREFIX = "ocr-tessdata-";
 
     /**
-     * Regex pattern to match an isolated Battlefield V server number.
+     * Regex pattern to match a Battlefield V server number.
      * <p>
-     * It expects a '#' character preceded by a space and followed by 3 or 5 digits.
+     * It expects a '#' character followed by 3-5 digits, with space or line boundary before.
      */
-    public static final String SERVER_NUMBER_REGEX = "(?<=\\s)#\\d{3,5}";
+    public static final String SERVER_NUMBER_REGEX = "(?<=^|\\s)#\\d{3,5}(?=\\s|$)";
 
     /**
-     * Flexible regex pattern to match an isolated Battlefield V server number.
+     * Flexible regex pattern to match a Battlefield V server number with various surroundings.
      * <p>
-     * It expects a '#' character preceded by numbers or spaces and followed by 3 or 5 digits.
+     * Used as a fallback when the strict pattern doesn't match.
+     * Group 1 captures just the server number.
      */
-    public static final String FLEXIBLE_SERVER_REGEX = ".*?(#\\d{3,5})";
+    public static final String FLEXIBLE_SERVER_REGEX = ".*?(#\\d{3,5})(?:\\s|$|[^\\d])";
+
+    /**
+     * Regex for validating the format of an extracted server number.
+     */
+    public static final String VALID_SERVER_NUMBER_FORMAT = "^#\\d{3,5}$";
+
+    /**
+     * Maximum number of numeric sequences in valid BFV screenshot OCR result
+     */
+    public static final int MAX_NUMERIC_SEQUENCES = 20;
+
+    /**
+     * Maximum length of OCR text for a valid BFV server screen
+     */
+    public static final int MAX_OCR_TEXT_LENGTH = 500;
 
     /**
      * Private constructor to prevent instantiation of this utility class.

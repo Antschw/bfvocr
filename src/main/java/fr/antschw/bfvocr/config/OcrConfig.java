@@ -18,7 +18,7 @@ import java.util.Properties;
  * @version 1.0
  * @since 1.0
  */
-public record OcrConfig(String dataPath, String language, int oem, int psm, String charWhitelist) {
+public record OcrConfig(String dataPath, String language, int oem, int psm, String charWhitelist, int dpi) {
     /**
      * Creates a new OcrConfig instance from a Properties object.
      * <p>
@@ -34,7 +34,8 @@ public record OcrConfig(String dataPath, String language, int oem, int psm, Stri
                 props.getProperty("tesseract.language"),
                 Integer.parseInt(props.getProperty("tesseract.oem")),
                 Integer.parseInt(props.getProperty("tesseract.psm")),
-                props.getProperty("tesseract.charWhitelist")
+                props.getProperty("tesseract.charWhitelist"),
+                Integer.parseInt(props.getProperty("tesseract.dpi"))
         );
     }
 }

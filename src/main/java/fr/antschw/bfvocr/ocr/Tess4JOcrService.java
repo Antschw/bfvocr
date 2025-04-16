@@ -191,6 +191,9 @@ public class Tess4JOcrService implements OcrService {
             tesseract.setPageSegMode(config.psm());
             tesseract.setVariable("tessedit_char_whitelist", config.charWhitelist());
 
+            // Set default DPI value to prevent the "Invalid resolution 1 dpi" warning
+            tesseract.setVariable("user_defined_dpi", String.valueOf(config.dpi()));
+
             LOGGER.debug("Tesseract configured successfully with datapath: {}", tessdataFolder.getAbsolutePath());
 
         } catch (IOException e) {

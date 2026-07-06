@@ -24,7 +24,7 @@ public record OcrConfig(String dataPath, String language, int oem, int psm, Stri
      * <p>
      * Extracts and parses the necessary properties to create a configuration object.
      *
-     * @param props Properties object containing OCR configuration
+     * @param props Property object containing OCR configuration
      * @throws NumberFormatException if the numeric properties cannot be parsed
      * @throws NullPointerException  if any of the required properties are missing
      */

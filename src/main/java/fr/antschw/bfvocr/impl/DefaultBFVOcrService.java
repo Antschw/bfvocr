@@ -1,9 +1,13 @@
 package fr.antschw.bfvocr.impl;
 
 import fr.antschw.bfvocr.api.BFVOcrService;
+import fr.antschw.bfvocr.config.OcrConfig;
 import fr.antschw.bfvocr.ocr.Tess4JOcrService;
 
-import com.google.inject.Inject;
+import javax.inject.Inject;
+
+import fr.antschw.bfvocr.ocr.TessdataProvider;
+import fr.antschw.bfvocr.preprocessing.ImagePreprocessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,13 +40,13 @@ public class DefaultBFVOcrService extends Tess4JOcrService implements BFVOcrServ
      *
      * @param preprocessor     the image preprocessor to use
      * @param config           the OCR configuration
-     * @param tessdataProvider the provider for Tesseract trained data
+     * @param tessdataProvider the provider for Tesseract-trained data
      */
     @Inject
     public DefaultBFVOcrService(
-            fr.antschw.bfvocr.preprocessing.ImagePreprocessor preprocessor,
-            fr.antschw.bfvocr.config.OcrConfig config,
-            fr.antschw.bfvocr.ocr.TessdataProvider tessdataProvider) {
+            ImagePreprocessor preprocessor,
+            OcrConfig config,
+            TessdataProvider tessdataProvider) {
         super(preprocessor, config, tessdataProvider);
         LOGGER.debug("DefaultBFVOcrService initialized");
     }

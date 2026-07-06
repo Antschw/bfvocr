@@ -1,17 +1,16 @@
 package fr.antschw.bfvocr.api;
 
 import fr.antschw.bfvocr.exceptions.BFVOcrException;
-import fr.antschw.bfvocr.guice.OcrModule;
+import fr.antschw.bfvocr.dagger.OcrComponent;
 import fr.antschw.bfvocr.init.NativeLibraryInitializer;
-
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.util.Optional;
+
+import static fr.antschw.bfvocr.dagger.DaggerOcrComponent.create;
 
 /**
  * Main factory for creating and using OCR services.
@@ -24,7 +23,7 @@ import java.util.Optional;
  */
 public final class BFVOcrFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(BFVOcrFactory.class);
-    private static volatile Injector injector = null;
+    private static volatile OcrComponent component = null;
     private static volatile BFVOcrService singletonService = null;
     private static final Object LOCK = new Object();
 
@@ -34,7 +33,7 @@ public final class BFVOcrFactory {
 
     /**
      * Returns a singleton instance of the OCR service.
-     * The service is initialized only once and reused for subsequent calls.
+     * The service is initialized only once and reused for later calls.
      * This avoids reloading Tesseract and its resources for each OCR operation.
      *
      * @return the singleton OCR service instance
@@ -45,7 +44,7 @@ public final class BFVOcrFactory {
             synchronized (LOCK) {
                 if (singletonService == null) {
                     NativeLibraryInitializer.initialize();
-                    singletonService = getInjector().getInstance(BFVOcrService.class);
+                    singletonService = getComponent().bfvOcrService();
 
                     // Register JVM shutdown hook to automatically close the service
                     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -144,11 +143,11 @@ public final class BFVOcrFactory {
         }
     }
 
-    private static synchronized Injector getInjector() {
-        if (injector == null) {
-            injector = Guice.createInjector(new OcrModule());
+    private static synchronized OcrComponent getComponent() {
+        if (component == null) {
+            component = create();
         }
-        return injector;
+        return component;
     }
 
     /**
@@ -183,7 +182,7 @@ public final class BFVOcrFactory {
                     singletonService = null;
                 }
             }
-            injector = null;
+            component = null;
         }
     }
 }

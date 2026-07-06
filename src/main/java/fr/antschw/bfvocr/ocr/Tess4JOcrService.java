@@ -4,7 +4,7 @@ import fr.antschw.bfvocr.config.OcrConfig;
 import fr.antschw.bfvocr.preprocessing.ImagePreprocessor;
 import fr.antschw.bfvocr.util.TempDirectoryHandler;
 
-import com.google.inject.Inject;
+import javax.inject.Inject;
 import net.sourceforge.tess4j.ITesseract;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;

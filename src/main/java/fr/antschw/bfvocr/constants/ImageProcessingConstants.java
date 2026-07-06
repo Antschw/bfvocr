@@ -26,12 +26,12 @@ public final class ImageProcessingConstants {
      */
     public static final int ADAPTIVE_THRESHOLD_CONSTANT = 2;
     /**
-     * Factor to divide image height by when extracting region of interest.
+     * Factor to divide image height by when extracting a region of interest.
      * A value of 3 means the top third of the image will be processed.
      */
     public static final int ROI_HEIGHT_FACTOR = 3;
     /**
-     * Factor to divide image width by when extracting region of interest.
+     * Factor to divide image width by when extracting a region of interest.
      * A value of 2 means the left half of the image will be processed.
      */
     public static final int ROI_WIDTH_FACTOR = 2;

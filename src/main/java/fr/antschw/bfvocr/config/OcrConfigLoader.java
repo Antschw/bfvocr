@@ -12,7 +12,7 @@ import java.util.Properties;
  * Loads OCR configuration properties from the specified configuration file.
  * <p>
  * This utility class is responsible for loading the OCR configuration from
- * the properties file defined in {@link fr.antschw.bfvocr.constants.OcrConstants#CONFIG_PATH}.
+ * the properties file defined in {@link OcrConstants#CONFIG_PATH}.
  *
  * @author antschw
  * @version 1.0

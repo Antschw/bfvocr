@@ -1,10 +1,8 @@
 package fr.antschw.bfvocr.api;
 
-import fr.antschw.bfvocr.guice.OcrModule;
+import fr.antschw.bfvocr.dagger.DaggerOcrComponent;
+import fr.antschw.bfvocr.dagger.OcrComponent;
 import fr.antschw.bfvocr.util.TempDirectoryHandler;
-
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.bytedeco.javacpp.Loader;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,11 +37,11 @@ class BFVOcrFactoryTest {
     private BFVOcrService mockService;
 
     @Mock
-    private Injector mockInjector;
+    private OcrComponent mockComponent;
 
     @BeforeEach
     public void setUp() throws Exception {
-        lenient().when(mockInjector.getInstance(BFVOcrService.class)).thenReturn(mockService);
+        lenient().when(mockComponent.bfvOcrService()).thenReturn(mockService);
         resetFactoryStatics();
     }
 
@@ -57,7 +55,7 @@ class BFVOcrFactoryTest {
         BFVOcrFactory.resetForTesting();
 
         // Backup reset via reflection
-        Field injectorField = BFVOcrFactory.class.getDeclaredField("injector");
+        Field injectorField = BFVOcrFactory.class.getDeclaredField("component");
         injectorField.setAccessible(true);
         injectorField.set(null, null);
 
@@ -71,9 +69,9 @@ class BFVOcrFactoryTest {
 
     @Test
     void getService_ShouldReturnServiceFromInjector() {
-        try (MockedStatic<Guice> mockedGuice = mockStatic(Guice.class);
+        try (MockedStatic<DaggerOcrComponent> mockedDagger = mockStatic(DaggerOcrComponent.class);
              MockedStatic<Loader> mockedLoader = mockStatic(Loader.class)) {
-            mockedGuice.when(() -> Guice.createInjector(any(OcrModule.class))).thenReturn(mockInjector);
+            mockedDagger.when(DaggerOcrComponent::create).thenReturn(mockComponent);
 
             BFVOcrService service = BFVOcrFactory.getService();
 
@@ -85,15 +83,15 @@ class BFVOcrFactoryTest {
 
     @Test
     void getService_ShouldReturnSameInstanceOnMultipleCalls() {
-        try (MockedStatic<Guice> mockedGuice = mockStatic(Guice.class);
+        try (MockedStatic<DaggerOcrComponent> mockedDagger = mockStatic(DaggerOcrComponent.class);
              MockedStatic<Loader> mockedLoader = mockStatic(Loader.class)) {
-            mockedGuice.when(() -> Guice.createInjector(any(OcrModule.class))).thenReturn(mockInjector);
+            mockedDagger.when(DaggerOcrComponent::create).thenReturn(mockComponent);
 
             BFVOcrService service1 = BFVOcrFactory.getService();
             BFVOcrService service2 = BFVOcrFactory.getService();
 
             assertSame(service1, service2);
-            mockedGuice.verify(() -> Guice.createInjector(any(OcrModule.class)), times(1));
+            mockedDagger.verify(DaggerOcrComponent::create, times(1));
             mockedLoader.verify(() -> Loader.load(any(Class.class)), times(1));
         }
     }

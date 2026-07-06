@@ -19,25 +19,25 @@ import java.util.Properties;
  * @since 1.0
  */
 public class OcrConfigLoader {
-    /**
-     * Loads the OCR configuration from the properties file.
-     * <p>
-     * This method reads the properties file from the classpath and creates
-     * an {@link OcrConfig} object with the loaded properties.
-     *
-     * @return an {@link OcrConfig} object containing all configuration parameters
-     * @throws RuntimeException if the configuration file cannot be found or loaded
-     */
-    public static OcrConfig load() {
-        Properties props = new Properties();
-        try (InputStream is = OcrConfigLoader.class.getClassLoader().getResourceAsStream(OcrConstants.CONFIG_PATH)) {
-            if (is == null) {
-                throw new FileNotFoundException("Configuration file not found: " + OcrConstants.CONFIG_PATH);
-            }
-            props.load(new InputStreamReader(is));
-            return new OcrConfig(props);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load configuration", e);
-        }
+  /**
+   * Loads the OCR configuration from the properties file.
+   * <p>
+   * This method reads the properties file from the classpath and creates
+   * an {@link OcrConfig} object with the loaded properties.
+   *
+   * @return an {@link OcrConfig} object containing all configuration parameters
+   * @throws RuntimeException if the configuration file cannot be found or loaded
+   */
+  public static OcrConfig load() {
+    Properties props = new Properties();
+    try (InputStream is = OcrConfigLoader.class.getClassLoader().getResourceAsStream(OcrConstants.CONFIG_PATH)) {
+      if (is == null) {
+        throw new FileNotFoundException("Configuration file not found: " + OcrConstants.CONFIG_PATH);
+      }
+      props.load(new InputStreamReader(is));
+      return new OcrConfig(props);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to load configuration", e);
     }
+  }
 }

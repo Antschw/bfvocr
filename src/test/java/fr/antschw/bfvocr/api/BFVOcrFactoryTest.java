@@ -33,141 +33,141 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class BFVOcrFactoryTest {
 
-    @Mock
-    private BFVOcrService mockService;
+  @Mock
+  private BFVOcrService mockService;
 
-    @Mock
-    private OcrComponent mockComponent;
+  @Mock
+  private OcrComponent mockComponent;
 
-    @BeforeEach
-    public void setUp() throws Exception {
-        lenient().when(mockComponent.bfvOcrService()).thenReturn(mockService);
-        resetFactoryStatics();
+  @BeforeEach
+  public void setUp() throws Exception {
+    lenient().when(mockComponent.bfvOcrService()).thenReturn(mockService);
+    resetFactoryStatics();
+  }
+
+  @AfterAll
+  static void cleanupAll() {
+    TempDirectoryHandler.cleanup();
+  }
+
+  protected void resetFactoryStatics() throws Exception {
+    // Reset via public method first
+    BFVOcrFactory.resetForTesting();
+
+    // Backup reset via reflection
+    Field injectorField = BFVOcrFactory.class.getDeclaredField("component");
+    injectorField.setAccessible(true);
+    injectorField.set(null, null);
+
+    Field serviceField = BFVOcrFactory.class.getDeclaredField("singletonService");
+    serviceField.setAccessible(true);
+    serviceField.set(null, null);
+
+    // Reset native libraries
+    fr.antschw.bfvocr.init.NativeLibraryInitializer.reset();
+  }
+
+  @Test
+  void getService_ShouldReturnServiceFromInjector() {
+    try (MockedStatic<DaggerOcrComponent> mockedDagger = mockStatic(DaggerOcrComponent.class);
+         MockedStatic<Loader> mockedLoader = mockStatic(Loader.class)) {
+      mockedDagger.when(DaggerOcrComponent::create).thenReturn(mockComponent);
+
+      BFVOcrService service = BFVOcrFactory.getService();
+
+      assertNotNull(service);
+      assertSame(mockService, service);
+      mockedLoader.verify(() -> Loader.load(any(Class.class)));
     }
+  }
 
-    @AfterAll
-    static void cleanupAll() {
-        TempDirectoryHandler.cleanup();
+  @Test
+  void getService_ShouldReturnSameInstanceOnMultipleCalls() {
+    try (MockedStatic<DaggerOcrComponent> mockedDagger = mockStatic(DaggerOcrComponent.class);
+         MockedStatic<Loader> mockedLoader = mockStatic(Loader.class)) {
+      mockedDagger.when(DaggerOcrComponent::create).thenReturn(mockComponent);
+
+      BFVOcrService service1 = BFVOcrFactory.getService();
+      BFVOcrService service2 = BFVOcrFactory.getService();
+
+      assertSame(service1, service2);
+      mockedDagger.verify(DaggerOcrComponent::create, times(1));
+      mockedLoader.verify(() -> Loader.load(any(Class.class)), times(1));
     }
+  }
 
-    protected void resetFactoryStatics() throws Exception {
-        // Reset via public method first
-        BFVOcrFactory.resetForTesting();
+  @Test
+  void extractServerNumber_Path_ShouldUseServiceInstance() {
+    try (MockedStatic<BFVOcrFactory> mockedFactory = mockStatic(BFVOcrFactory.class)) {
+      mockedFactory.when(BFVOcrFactory::getService).thenReturn(mockService);
+      mockedFactory.when(() -> BFVOcrFactory.extractServerNumber(any(Path.class))).thenCallRealMethod();
+      lenient().when(mockService.extractServerNumber(any(Path.class))).thenReturn("12345");
 
-        // Backup reset via reflection
-        Field injectorField = BFVOcrFactory.class.getDeclaredField("component");
-        injectorField.setAccessible(true);
-        injectorField.set(null, null);
+      Path testPath = Path.of("test.png");
+      String result = BFVOcrFactory.extractServerNumber(testPath);
 
+      assertEquals("12345", result);
+      verify(mockService).extractServerNumber(any(Path.class));
+    }
+  }
+
+  @Test
+  void extractServerNumber_Path_ShouldThrowWhenPathIsNull() {
+    assertThrows(IllegalArgumentException.class,
+        () -> BFVOcrFactory.extractServerNumber((Path) null));
+  }
+
+  @Test
+  void extractServerNumber_BufferedImage_ShouldUseServiceInstance() {
+    try (MockedStatic<BFVOcrFactory> mockedFactory = mockStatic(BFVOcrFactory.class)) {
+      mockedFactory.when(BFVOcrFactory::getService).thenReturn(mockService);
+      mockedFactory.when(() -> BFVOcrFactory.extractServerNumber(any(BufferedImage.class))).thenCallRealMethod();
+      lenient().when(mockService.extractServerNumber(any(BufferedImage.class))).thenReturn("12345");
+
+      BufferedImage image = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
+      String result = BFVOcrFactory.extractServerNumber(image);
+
+      assertEquals("12345", result);
+      verify(mockService).extractServerNumber(any(BufferedImage.class));
+    }
+  }
+
+  @Test
+  void tryExtractServerNumber_Path_ShouldReturnOptionalWhenSuccess() {
+    try (MockedStatic<BFVOcrFactory> mockedFactory = mockStatic(BFVOcrFactory.class)) {
+      mockedFactory.when(() -> BFVOcrFactory.extractServerNumber(any(Path.class))).thenReturn("12345");
+      mockedFactory.when(() -> BFVOcrFactory.tryExtractServerNumber(any(Path.class))).thenCallRealMethod();
+
+      Optional<String> result = BFVOcrFactory.tryExtractServerNumber(Path.of("test.png"));
+
+      assertTrue(result.isPresent());
+      assertEquals("12345", result.get());
+    }
+  }
+
+  @Test
+  void shutdown_ShouldCloseAndClearService() {
+    BFVOcrService spyService = mock(BFVOcrService.class);
+
+    try {
+      Field serviceField = BFVOcrFactory.class.getDeclaredField("singletonService");
+      serviceField.setAccessible(true);
+      serviceField.set(null, spyService);
+
+      BFVOcrFactory.shutdown();
+
+      verify(spyService).close();
+
+    } catch (Exception e) {
+      fail("Test failed with exception: " + e.getMessage(), e);
+    } finally {
+      try {
         Field serviceField = BFVOcrFactory.class.getDeclaredField("singletonService");
         serviceField.setAccessible(true);
         serviceField.set(null, null);
-
-        // Reset native libraries
-        fr.antschw.bfvocr.init.NativeLibraryInitializer.reset();
+      } catch (Exception e) {
+        // Ignored
+      }
     }
-
-    @Test
-    void getService_ShouldReturnServiceFromInjector() {
-        try (MockedStatic<DaggerOcrComponent> mockedDagger = mockStatic(DaggerOcrComponent.class);
-             MockedStatic<Loader> mockedLoader = mockStatic(Loader.class)) {
-            mockedDagger.when(DaggerOcrComponent::create).thenReturn(mockComponent);
-
-            BFVOcrService service = BFVOcrFactory.getService();
-
-            assertNotNull(service);
-            assertSame(mockService, service);
-            mockedLoader.verify(() -> Loader.load(any(Class.class)));
-        }
-    }
-
-    @Test
-    void getService_ShouldReturnSameInstanceOnMultipleCalls() {
-        try (MockedStatic<DaggerOcrComponent> mockedDagger = mockStatic(DaggerOcrComponent.class);
-             MockedStatic<Loader> mockedLoader = mockStatic(Loader.class)) {
-            mockedDagger.when(DaggerOcrComponent::create).thenReturn(mockComponent);
-
-            BFVOcrService service1 = BFVOcrFactory.getService();
-            BFVOcrService service2 = BFVOcrFactory.getService();
-
-            assertSame(service1, service2);
-            mockedDagger.verify(DaggerOcrComponent::create, times(1));
-            mockedLoader.verify(() -> Loader.load(any(Class.class)), times(1));
-        }
-    }
-
-    @Test
-    void extractServerNumber_Path_ShouldUseServiceInstance() {
-        try (MockedStatic<BFVOcrFactory> mockedFactory = mockStatic(BFVOcrFactory.class)) {
-            mockedFactory.when(BFVOcrFactory::getService).thenReturn(mockService);
-            mockedFactory.when(() -> BFVOcrFactory.extractServerNumber(any(Path.class))).thenCallRealMethod();
-            lenient().when(mockService.extractServerNumber(any(Path.class))).thenReturn("12345");
-
-            Path testPath = Path.of("test.png");
-            String result = BFVOcrFactory.extractServerNumber(testPath);
-
-            assertEquals("12345", result);
-            verify(mockService).extractServerNumber(any(Path.class));
-        }
-    }
-
-    @Test
-    void extractServerNumber_Path_ShouldThrowWhenPathIsNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> BFVOcrFactory.extractServerNumber((Path) null));
-    }
-
-    @Test
-    void extractServerNumber_BufferedImage_ShouldUseServiceInstance() {
-        try (MockedStatic<BFVOcrFactory> mockedFactory = mockStatic(BFVOcrFactory.class)) {
-            mockedFactory.when(BFVOcrFactory::getService).thenReturn(mockService);
-            mockedFactory.when(() -> BFVOcrFactory.extractServerNumber(any(BufferedImage.class))).thenCallRealMethod();
-            lenient().when(mockService.extractServerNumber(any(BufferedImage.class))).thenReturn("12345");
-
-            BufferedImage image = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
-            String result = BFVOcrFactory.extractServerNumber(image);
-
-            assertEquals("12345", result);
-            verify(mockService).extractServerNumber(any(BufferedImage.class));
-        }
-    }
-
-    @Test
-    void tryExtractServerNumber_Path_ShouldReturnOptionalWhenSuccess() {
-        try (MockedStatic<BFVOcrFactory> mockedFactory = mockStatic(BFVOcrFactory.class)) {
-            mockedFactory.when(() -> BFVOcrFactory.extractServerNumber(any(Path.class))).thenReturn("12345");
-            mockedFactory.when(() -> BFVOcrFactory.tryExtractServerNumber(any(Path.class))).thenCallRealMethod();
-
-            Optional<String> result = BFVOcrFactory.tryExtractServerNumber(Path.of("test.png"));
-
-            assertTrue(result.isPresent());
-            assertEquals("12345", result.get());
-        }
-    }
-
-    @Test
-    void shutdown_ShouldCloseAndClearService() {
-        BFVOcrService spyService = mock(BFVOcrService.class);
-
-        try {
-            Field serviceField = BFVOcrFactory.class.getDeclaredField("singletonService");
-            serviceField.setAccessible(true);
-            serviceField.set(null, spyService);
-
-            BFVOcrFactory.shutdown();
-
-            verify(spyService).close();
-
-        } catch (Exception e) {
-            fail("Test failed with exception: " + e.getMessage(), e);
-        } finally {
-            try {
-                Field serviceField = BFVOcrFactory.class.getDeclaredField("singletonService");
-                serviceField.setAccessible(true);
-                serviceField.set(null, null);
-            } catch (Exception e) {
-                // Ignored
-            }
-        }
-    }
+  }
 }

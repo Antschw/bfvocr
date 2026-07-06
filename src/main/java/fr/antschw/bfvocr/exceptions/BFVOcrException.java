@@ -12,23 +12,23 @@ package fr.antschw.bfvocr.exceptions;
  */
 public class BFVOcrException extends RuntimeException {
 
-    /**
-     * Constructs a new BFVOcrException with the specified detail message.
-     *
-     * @param message the detail message
-     */
-    public BFVOcrException(String message) {
-        super(message);
-    }
+  /**
+   * Constructs a new BFVOcrException with the specified detail message.
+   *
+   * @param message the detail message
+   */
+  public BFVOcrException(String message) {
+    super(message);
+  }
 
-    /**
-     * Constructs a new BFVOcrException with the specified detail message and cause.
-     *
-     * @param message the detail message
-     * @param cause   the cause of the exception
-     */
-    public BFVOcrException(String message, Throwable cause) {
-        super(message, cause);
-    }
+  /**
+   * Constructs a new BFVOcrException with the specified detail message and cause.
+   *
+   * @param message the detail message
+   * @param cause   the cause of the exception
+   */
+  public BFVOcrException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
 }

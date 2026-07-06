@@ -38,56 +38,56 @@ import javax.inject.Singleton;
 @Module
 public abstract class OcrModule {
 
-    /**
-     * Binds the OCR service interface to its Tess4J implementation.
-     *
-     * @param impl the concrete Tess4JOcrService implementation
-     * @return the bound OcrService instance
-     */
-    @Binds
-    @Singleton
-    abstract OcrService bindOcrService(Tess4JOcrService impl);
+  /**
+   * Binds the OCR service interface to its Tess4J implementation.
+   *
+   * @param impl the concrete Tess4JOcrService implementation
+   * @return the bound OcrService instance
+   */
+  @Binds
+  @Singleton
+  abstract OcrService bindOcrService(Tess4JOcrService impl);
 
-    /**
-     * Binds the BFV OCR service interface to its default implementation.
-     *
-     * @param impl the concrete DefaultBFVOcrService implementation
-     * @return the bound BFVOcrService instance
-     */
-    @Binds
-    @Singleton
-    abstract BFVOcrService bindBFVOcrService(DefaultBFVOcrService impl);
+  /**
+   * Binds the BFV OCR service interface to its default implementation.
+   *
+   * @param impl the concrete DefaultBFVOcrService implementation
+   * @return the bound BFVOcrService instance
+   */
+  @Binds
+  @Singleton
+  abstract BFVOcrService bindBFVOcrService(DefaultBFVOcrService impl);
 
-    /**
-     * Provides the OpenCV-based image preprocessor.
-     *
-     * @return the ImagePreprocessor instance
-     */
-    @Provides
-    @Singleton
-    static ImagePreprocessor provideImagePreprocessor() {
-        return new OpenCvPreprocessor();
-    }
+  /**
+   * Provides the OpenCV-based image preprocessor.
+   *
+   * @return the ImagePreprocessor instance
+   */
+  @Provides
+  @Singleton
+  static ImagePreprocessor provideImagePreprocessor() {
+    return new OpenCvPreprocessor();
+  }
 
-    /**
-     * Provides the classpath-based Tessdata provider.
-     *
-     * @return the TessdataProvider instance
-     */
-    @Provides
-    @Singleton
-    static TessdataProvider provideTessdataProvider() {
-        return new ClasspathTessdataProvider();
-    }
+  /**
+   * Provides the classpath-based Tessdata provider.
+   *
+   * @return the TessdataProvider instance
+   */
+  @Provides
+  @Singleton
+  static TessdataProvider provideTessdataProvider() {
+    return new ClasspathTessdataProvider();
+  }
 
-    /**
-     * Provides the application OCR configuration loaded from configuration files.
-     *
-     * @return the OcrConfig instance
-     */
-    @Provides
-    @Singleton
-    static OcrConfig provideOcrConfig() {
-        return OcrConfigLoader.load();
-    }
+  /**
+   * Provides the application OCR configuration loaded from configuration files.
+   *
+   * @return the OcrConfig instance
+   */
+  @Provides
+  @Singleton
+  static OcrConfig provideOcrConfig() {
+    return OcrConfigLoader.load();
+  }
 }

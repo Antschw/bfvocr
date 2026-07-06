@@ -1,5 +1,6 @@
 package fr.antschw.bfvocr.impl;
 
+import fr.antschw.bfvocr.config.OcrConfig;
 import fr.antschw.bfvocr.exceptions.BFVOcrException;
 import fr.antschw.bfvocr.ocr.TessdataProvider;
 import fr.antschw.bfvocr.preprocessing.ImagePreprocessor;
@@ -35,230 +36,230 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class DefaultBFVOcrServiceTest {
 
-    @Mock
-    private ImagePreprocessor mockPreprocessor;
+  @Mock
+  private ImagePreprocessor mockPreprocessor;
 
-    @Mock
-    private fr.antschw.bfvocr.config.OcrConfig mockConfig;
+  @Mock
+  private OcrConfig mockConfig;
 
-    @Mock
-    private TessdataProvider mockTessdataProvider;
+  @Mock
+  private TessdataProvider mockTessdataProvider;
 
-    @TempDir
-    Path tempDir;
+  @TempDir
+  Path tempDir;
 
-    private Path testImagePath;
+  private Path testImagePath;
 
-    @BeforeEach
-    void setUp() throws IOException {
-        testImagePath = Files.createFile(tempDir.resolve("test.png"));
+  @BeforeEach
+  void setUp() throws IOException {
+    testImagePath = Files.createFile(tempDir.resolve("test.png"));
+  }
+
+  @AfterEach
+  void tearDown() {
+  }
+
+  @AfterAll
+  static void cleanupAll() {
+    TempDirectoryHandler.cleanup();
+  }
+
+  /**
+   * Tests for extractServerNumber(Path)
+   */
+  @Test
+  void extractServerNumber_Path_ShouldExtractNumber() {
+    // Arrange
+    try (DefaultBFVOcrService service = spy(createNoOpService())) {
+      doReturn("12345").when(service).extractServerNumber(any(Path.class));
+
+      // Act
+      String result = service.extractServerNumber(testImagePath);
+
+      // Assert
+      assertEquals("12345", result);
     }
+  }
 
-    @AfterEach
-    void tearDown() {
+  @Test
+  void extractServerNumber_Path_ShouldThrowWhenPathIsNull() {
+    // Arrange
+    try (DefaultBFVOcrService service = createNoOpService()) {
+      // Act & Assert
+      assertThrows(NullPointerException.class, () -> service.extractServerNumber((Path) null));
     }
+  }
 
-    @AfterAll
-    static void cleanupAll() {
-        TempDirectoryHandler.cleanup();
+  @Test
+  void extractServerNumber_Path_ShouldThrowWhenPathDoesNotExist() {
+    // Arrange
+    Path nonExistentPath = tempDir.resolve("nonexistent.png");
+    try (DefaultBFVOcrService service = createNoOpService()) {
+      // Act & Assert
+      assertThrows(IllegalArgumentException.class, () -> service.extractServerNumber(nonExistentPath));
     }
+  }
 
-    /**
-     * Tests for extractServerNumber(Path)
-     */
-    @Test
-    void extractServerNumber_Path_ShouldExtractNumber() {
-        // Arrange
-        try (DefaultBFVOcrService service = spy(createNoOpService())) {
-            doReturn("12345").when(service).extractServerNumber(any(Path.class));
+  /**
+   * Tests for extractServerNumber(BufferedImage)
+   */
+  @Test
+  void extractServerNumber_BufferedImage_ShouldExtractNumber() {
+    // Arrange
+    BufferedImage mockImage = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
+    try (DefaultBFVOcrService service = spy(createNoOpService())) {
+      doReturn("12345").when(service).extractServerNumber(any(BufferedImage.class));
 
-            // Act
-            String result = service.extractServerNumber(testImagePath);
+      // Act
+      String result = service.extractServerNumber(mockImage);
 
-            // Assert
-            assertEquals("12345", result);
-        }
+      // Assert
+      assertEquals("12345", result);
     }
+  }
 
-    @Test
-    void extractServerNumber_Path_ShouldThrowWhenPathIsNull() {
-        // Arrange
-        try (DefaultBFVOcrService service = createNoOpService()) {
-            // Act & Assert
-            assertThrows(NullPointerException.class, () -> service.extractServerNumber((Path) null));
-        }
+  @Test
+  void extractServerNumber_BufferedImage_ShouldThrowWhenImageIsNull() {
+    // Arrange
+    try (DefaultBFVOcrService service = createNoOpService()) {
+      // Act & Assert
+      assertThrows(NullPointerException.class, () -> service.extractServerNumber((BufferedImage) null));
     }
+  }
 
-    @Test
-    void extractServerNumber_Path_ShouldThrowWhenPathDoesNotExist() {
-        // Arrange
-        Path nonExistentPath = tempDir.resolve("nonexistent.png");
-        try (DefaultBFVOcrService service = createNoOpService()) {
-            // Act & Assert
-            assertThrows(IllegalArgumentException.class, () -> service.extractServerNumber(nonExistentPath));
-        }
+  /**
+   * Tests for tryExtractServerNumber(Path)
+   */
+  @Test
+  void tryExtractServerNumber_Path_ShouldReturnOptionalWhenSuccess() {
+    // Arrange
+    try (DefaultBFVOcrService service = spy(createNoOpService())) {
+      doReturn("12345").when(service).extractServerNumber(any(Path.class));
+
+      // Act
+      Optional<String> result = service.tryExtractServerNumber(testImagePath);
+
+      // Assert
+      assertTrue(result.isPresent());
+      assertEquals("12345", result.get());
     }
+  }
 
-    /**
-     * Tests for extractServerNumber(BufferedImage)
-     */
-    @Test
-    void extractServerNumber_BufferedImage_ShouldExtractNumber() {
-        // Arrange
-        BufferedImage mockImage = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
-        try (DefaultBFVOcrService service = spy(createNoOpService())) {
-            doReturn("12345").when(service).extractServerNumber(any(BufferedImage.class));
+  @Test
+  void tryExtractServerNumber_Path_ShouldReturnEmptyWhenPathIsNull() {
+    // Arrange
+    try (DefaultBFVOcrService service = createNoOpService()) {
+      // Act
+      Optional<String> result = service.tryExtractServerNumber((Path) null);
 
-            // Act
-            String result = service.extractServerNumber(mockImage);
-
-            // Assert
-            assertEquals("12345", result);
-        }
+      // Assert
+      assertTrue(result.isEmpty());
     }
+  }
 
-    @Test
-    void extractServerNumber_BufferedImage_ShouldThrowWhenImageIsNull() {
-        // Arrange
-        try (DefaultBFVOcrService service = createNoOpService()) {
-            // Act & Assert
-            assertThrows(NullPointerException.class, () -> service.extractServerNumber((BufferedImage) null));
-        }
+  @Test
+  void tryExtractServerNumber_Path_ShouldReturnEmptyWhenPathDoesNotExist() {
+    // Arrange
+    Path nonExistentPath = tempDir.resolve("nonexistent.png");
+    try (DefaultBFVOcrService service = createNoOpService()) {
+      // Act
+      Optional<String> result = service.tryExtractServerNumber(nonExistentPath);
+
+      // Assert
+      assertTrue(result.isEmpty());
     }
+  }
 
-    /**
-     * Tests for tryExtractServerNumber(Path)
-     */
-    @Test
-    void tryExtractServerNumber_Path_ShouldReturnOptionalWhenSuccess() {
-        // Arrange
-        try (DefaultBFVOcrService service = spy(createNoOpService())) {
-            doReturn("12345").when(service).extractServerNumber(any(Path.class));
+  @Test
+  void tryExtractServerNumber_Path_ShouldReturnEmptyWhenExceptionIsThrown() {
+    // Arrange
+    try (DefaultBFVOcrService service = spy(createNoOpService())) {
+      doThrow(new RuntimeException("Test exception")).when(service).extractServerNumber(any(Path.class));
 
-            // Act
-            Optional<String> result = service.tryExtractServerNumber(testImagePath);
+      // Act
+      Optional<String> result = service.tryExtractServerNumber(testImagePath);
 
-            // Assert
-            assertTrue(result.isPresent());
-            assertEquals("12345", result.get());
-        }
+      // Assert
+      assertTrue(result.isEmpty());
     }
+  }
 
-    @Test
-    void tryExtractServerNumber_Path_ShouldReturnEmptyWhenPathIsNull() {
-        // Arrange
-        try (DefaultBFVOcrService service = createNoOpService()) {
-            // Act
-            Optional<String> result = service.tryExtractServerNumber((Path) null);
+  /**
+   * Tests for tryExtractServerNumber(BufferedImage)
+   */
+  @Test
+  void tryExtractServerNumber_BufferedImage_ShouldReturnOptionalWhenSuccess() {
+    // Arrange
+    BufferedImage mockImage = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
+    try (DefaultBFVOcrService service = spy(createNoOpService())) {
+      doReturn("12345").when(service).extractServerNumber(any(BufferedImage.class));
 
-            // Assert
-            assertTrue(result.isEmpty());
-        }
+      // Act
+      Optional<String> result = service.tryExtractServerNumber(mockImage);
+
+      // Assert
+      assertTrue(result.isPresent());
+      assertEquals("12345", result.get());
     }
+  }
 
-    @Test
-    void tryExtractServerNumber_Path_ShouldReturnEmptyWhenPathDoesNotExist() {
-        // Arrange
-        Path nonExistentPath = tempDir.resolve("nonexistent.png");
-        try (DefaultBFVOcrService service = createNoOpService()) {
-            // Act
-            Optional<String> result = service.tryExtractServerNumber(nonExistentPath);
+  @Test
+  void tryExtractServerNumber_BufferedImage_ShouldReturnEmptyWhenImageIsNull() {
+    // Arrange
+    try (DefaultBFVOcrService service = createNoOpService()) {
+      // Act
+      Optional<String> result = service.tryExtractServerNumber((BufferedImage) null);
 
-            // Assert
-            assertTrue(result.isEmpty());
-        }
+      // Assert
+      assertTrue(result.isEmpty());
     }
+  }
 
-    @Test
-    void tryExtractServerNumber_Path_ShouldReturnEmptyWhenExceptionIsThrown() {
-        // Arrange
-        try (DefaultBFVOcrService service = spy(createNoOpService())) {
-            doThrow(new RuntimeException("Test exception")).when(service).extractServerNumber(any(Path.class));
+  @Test
+  void tryExtractServerNumber_BufferedImage_ShouldReturnEmptyWhenExceptionIsThrown() {
+    // Arrange
+    BufferedImage mockImage = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
+    try (DefaultBFVOcrService service = spy(createNoOpService())) {
+      doThrow(new BFVOcrException("Test exception")).when(service).extractServerNumber(any(BufferedImage.class));
 
-            // Act
-            Optional<String> result = service.tryExtractServerNumber(testImagePath);
+      // Act
+      Optional<String> result = service.tryExtractServerNumber(mockImage);
 
-            // Assert
-            assertTrue(result.isEmpty());
-        }
+      // Assert
+      assertTrue(result.isEmpty());
     }
+  }
 
-    /**
-     * Tests for tryExtractServerNumber(BufferedImage)
-     */
-    @Test
-    void tryExtractServerNumber_BufferedImage_ShouldReturnOptionalWhenSuccess() {
-        // Arrange
-        BufferedImage mockImage = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
-        try (DefaultBFVOcrService service = spy(createNoOpService())) {
-            doReturn("12345").when(service).extractServerNumber(any(BufferedImage.class));
+  @Test
+  void shutdown_ShouldCallClose() {
+    // Arrange
+    try (DefaultBFVOcrService service = spy(createNoOpService())) {
+      doNothing().when(service).close();
 
-            // Act
-            Optional<String> result = service.tryExtractServerNumber(mockImage);
+      // Act
+      service.shutdown();
 
-            // Assert
-            assertTrue(result.isPresent());
-            assertEquals("12345", result.get());
-        }
+      // Assert
+      verify(service).close();
     }
+  }
 
-    @Test
-    void tryExtractServerNumber_BufferedImage_ShouldReturnEmptyWhenImageIsNull() {
-        // Arrange
-        try (DefaultBFVOcrService service = createNoOpService()) {
-            // Act
-            Optional<String> result = service.tryExtractServerNumber((BufferedImage) null);
+  /**
+   * Creates a DefaultBFVOcrService instance that skips problematic constructor code.
+   *
+   * @return A testable DefaultBFVOcrService instance
+   */
+  private DefaultBFVOcrService createNoOpService() {
+    return new DefaultBFVOcrService(mockPreprocessor, mockConfig, mockTessdataProvider) {
+      @Override
+      protected void setupTesseract() {
+        // Do nothing to avoid initialization errors
+      }
 
-            // Assert
-            assertTrue(result.isEmpty());
-        }
-    }
-
-    @Test
-    void tryExtractServerNumber_BufferedImage_ShouldReturnEmptyWhenExceptionIsThrown() {
-        // Arrange
-        BufferedImage mockImage = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
-        try (DefaultBFVOcrService service = spy(createNoOpService())) {
-            doThrow(new BFVOcrException("Test exception")).when(service).extractServerNumber(any(BufferedImage.class));
-
-            // Act
-            Optional<String> result = service.tryExtractServerNumber(mockImage);
-
-            // Assert
-            assertTrue(result.isEmpty());
-        }
-    }
-
-    @Test
-    void shutdown_ShouldCallClose() {
-        // Arrange
-        try (DefaultBFVOcrService service = spy(createNoOpService())) {
-            doNothing().when(service).close();
-
-            // Act
-            service.shutdown();
-
-            // Assert
-            verify(service).close();
-        }
-    }
-
-    /**
-     * Creates a DefaultBFVOcrService instance that skips problematic constructor code.
-     *
-     * @return A testable DefaultBFVOcrService instance
-     */
-    private DefaultBFVOcrService createNoOpService() {
-        return new DefaultBFVOcrService(mockPreprocessor, mockConfig, mockTessdataProvider) {
-            @Override
-            protected void setupTesseract() {
-                // Do nothing to avoid initialization errors
-            }
-
-            @Override
-            public void close() {
-                // Implementation left empty intentionally
-            }
-        };
-    }
+      @Override
+      public void close() {
+        // Implementation left empty intentionally
+      }
+    };
+  }
 }

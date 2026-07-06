@@ -18,10 +18,10 @@ import javax.inject.Singleton;
 @Singleton
 @Component(modules = OcrModule.class)
 public interface OcrComponent {
-    /**
-     * Retrieves the fully configured and dependency-injected BFVOcrService instance.
-     *
-     * @return the BFVOcrService singleton instance
-     */
-    BFVOcrService bfvOcrService();
+  /**
+   * Retrieves the fully configured and dependency-injected BFVOcrService instance.
+   *
+   * @return the BFVOcrService singleton instance
+   */
+  BFVOcrService bfvOcrService();
 }

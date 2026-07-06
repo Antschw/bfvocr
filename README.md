@@ -16,7 +16,7 @@ It leverages advanced image processing techniques (via OpenCV) to optimize image
 - Accurate server number extraction via regex and post-processing
 - Image preprocessing pipeline using OpenCV (grayscale, thresholding, ROI, scaling)
 - Clean and modular architecture following SOLID principles
-- Static API access via `BFVOcrFactory` or injectable services via Guice
+- Static API access via `BFVOcrFactory` or injectable services via Dagger
 - SLF4J-based logging with Logback
 - Fully tested using JUnit 5 and Mockito
 
@@ -36,8 +36,9 @@ fr.antschw.bfvocr
 │   └── OcrConstants.java
 ├── exceptions                 # Domain-specific exceptions
 │   └── BFVOcrException.java
-├── guice                      # Dependency Injection with Guice
-│   └── OcrModule.java
+├── dagger                     # Dependency Injection with Dagger
+│   ├── OcrModule.java
+│   └── OcrComponent.java
 ├── impl                       # Service implementation
 │   └── DefaultBFVOcrService.java
 ├── init                       # Native loader for OpenCV
@@ -96,7 +97,7 @@ Run `App.java` to:
 
 ## Architecture & DI
 
-- Guice module: `OcrModule.java` binds:
+- Dagger component: `OcrComponent.java` and module `OcrModule.java` bind:
    - `BFVOcrService` → `DefaultBFVOcrService`
    - `OcrService` → `Tess4JOcrService`
    - `ImagePreprocessor` → `OpenCvPreprocessor`
@@ -120,5 +121,5 @@ Run `App.java` to:
 - Tess4J 5.11.0 + Tesseract 5.5.0
 - OpenCV 4.10.0 (JavaCPP)
 - SLF4J + Logback
-- Google Guice
+- Google Dagger
 - JUnit 5 + Mockito

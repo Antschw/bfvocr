@@ -14,14 +14,14 @@ import java.io.InputStream;
  * @since 1.0
  */
 public interface TessdataProvider {
-    /**
-     * Provides an InputStream for the Tesseract training data file.
-     * <p>
-     * This method should return a stream to the appropriate *.traineddata file
-     * based on the configured language.
-     *
-     * @return an InputStream containing the Tesseract training data
-     * @throws IOException if the training data cannot be accessed
-     */
-    InputStream getTessdataStream() throws IOException;
+  /**
+   * Provides an InputStream for the Tesseract training data file.
+   * <p>
+   * This method should return a stream to the appropriate *.traineddata file
+   * based on the configured language.
+   *
+   * @return an InputStream containing the Tesseract training data
+   * @throws IOException if the training data cannot be accessed
+   */
+  InputStream getTessdataStream() throws IOException;
 }

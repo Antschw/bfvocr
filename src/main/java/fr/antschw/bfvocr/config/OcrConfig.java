@@ -19,23 +19,23 @@ import java.util.Properties;
  * @since 1.0
  */
 public record OcrConfig(String dataPath, String language, int oem, int psm, String charWhitelist, int dpi) {
-    /**
-     * Creates a new OcrConfig instance from a Properties object.
-     * <p>
-     * Extracts and parses the necessary properties to create a configuration object.
-     *
-     * @param props Properties object containing OCR configuration
-     * @throws NumberFormatException if the numeric properties cannot be parsed
-     * @throws NullPointerException  if any of the required properties are missing
-     */
-    public OcrConfig(Properties props) {
-        this(
-                props.getProperty("tesseract.dataPath"),
-                props.getProperty("tesseract.language"),
-                Integer.parseInt(props.getProperty("tesseract.oem")),
-                Integer.parseInt(props.getProperty("tesseract.psm")),
-                props.getProperty("tesseract.charWhitelist"),
-                Integer.parseInt(props.getProperty("tesseract.dpi"))
-        );
-    }
+  /**
+   * Creates a new OcrConfig instance from a Properties object.
+   * <p>
+   * Extracts and parses the necessary properties to create a configuration object.
+   *
+   * @param props Property object containing OCR configuration
+   * @throws NumberFormatException if the numeric properties cannot be parsed
+   * @throws NullPointerException  if any of the required properties are missing
+   */
+  public OcrConfig(Properties props) {
+    this(
+        props.getProperty("tesseract.dataPath"),
+        props.getProperty("tesseract.language"),
+        Integer.parseInt(props.getProperty("tesseract.oem")),
+        Integer.parseInt(props.getProperty("tesseract.psm")),
+        props.getProperty("tesseract.charWhitelist"),
+        Integer.parseInt(props.getProperty("tesseract.dpi"))
+    );
+  }
 }
